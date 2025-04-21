@@ -1,13 +1,14 @@
 package com.samuelji.fishgame.security;
 
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+
+import org.springframework.stereotype.Component;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
 
 @Component
 public class DynamicRateLimiter implements Filter {
@@ -29,7 +30,7 @@ public class DynamicRateLimiter implements Filter {
         synchronized (this) {
             requestCount++;
             if (requestCount > maxRequests) {
-                ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                ((HttpServletResponse) response).setStatus(429);
                 response.getWriter().write("{\"code\": 429, \"msg\": \"Too many requests\"}");
                 return;
             }

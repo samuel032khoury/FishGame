@@ -11,7 +11,7 @@ public class FilterConfig {
     public FilterRegistrationBean<APITimestampFilter> apiTimestampFilter() {
         FilterRegistrationBean<APITimestampFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new APITimestampFilter());
-        registrationBean.addUrlPatterns("/NONE");
+        registrationBean.addUrlPatterns("/user/*", "/fish/*", "/shop/*");
         return registrationBean;
     }
 
@@ -19,7 +19,7 @@ public class FilterConfig {
     public FilterRegistrationBean<DynamicRateLimiter> dynamicRateLimiter() {
         FilterRegistrationBean<DynamicRateLimiter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new DynamicRateLimiter());
-        registrationBean.addUrlPatterns("/*"); // 全局限流
+        registrationBean.addUrlPatterns("/*");
         return registrationBean;
     }
 
