@@ -1,5 +1,8 @@
 package com.samuelji.fishgame.controller;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    private static final String API_PASSWORD = "default_password";
 
     // Check if user exists
     @GetMapping("/is-exist")
@@ -47,5 +52,31 @@ public class UserController {
     @GetMapping("/finance")
     public Map<String, Object> getUserFinance(@RequestParam String userId) {
         return userService.getUserFinanceInfo(userId);
+    }
+
+    @GetMapping("/generate-token")
+    public Map<String, String> generateToken() {
+        long timestamp = System.currentTimeMillis() / 1000;
+        String token = generateToken(API_PASSWORD, String.valueOf(timestamp));
+
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        response.put("timestamp", String.valueOf(timestamp));
+        return response;
+    }
+
+    private String generateToken(String password, String timestamp) {
+        try {
+            String data = password + timestamp + password;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(data.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error generating token", e);
+        }
     }
 }
