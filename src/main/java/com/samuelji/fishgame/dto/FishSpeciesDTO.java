@@ -22,6 +22,7 @@ public class FishSpeciesDTO {
         private Double mean;
         private Double standardDeviation = 0.625;
         private Boolean status = true;
+        private Double price = 1.0;
     }
 
     @Data
@@ -31,6 +32,7 @@ public class FishSpeciesDTO {
         private String type;
         private String description;
         private Double probability;
+        private Double price;
     }
 
     @Data
@@ -50,6 +52,7 @@ public class FishSpeciesDTO {
         private Double mean;
         private Double standardDeviation;
         private Boolean status;
+        private Double price;
     }
 
 }

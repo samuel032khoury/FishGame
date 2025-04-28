@@ -30,4 +30,6 @@ public class FishSpecies {
     private Double mean; // Mean weight of the fish
     private Double standardDeviation; // Standard deviation of the fish weight
     private Boolean status; // Status of the fish (availability for catching)
+    private Double price; // Price of the fish
+    private Double minWeight; // Minimum weight of the fish
 }

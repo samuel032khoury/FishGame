@@ -30,40 +30,43 @@ public class FishSpeciesController {
         response.setType(fish.getType());
         response.setDescription(fish.getDescription());
         response.setProbability(fish.getProbability());
+        response.setPrice(fish.getPrice());
         return response;
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<FishSpeciesDTO.Response>> getAllFishTypes() {
-        List<FishSpecies> fishList = fishSpeciesRepository.findAll();
-        if (fishList.isEmpty()) {
+    public ResponseEntity<List<FishSpeciesDTO.Response>> getAllFishSpecies() {
+        List<FishSpecies> fishSpeciesList = fishSpeciesRepository.findAll();
+        if (fishSpeciesList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        List<FishSpeciesDTO.Response> responseList = fishList.stream()
+        List<FishSpeciesDTO.Response> responseList = fishSpeciesList.stream()
                 .map(this::mapToResponse)
                 .toList();
         return ResponseEntity.ok(responseList);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<FishSpeciesDTO.Response> createFish(@RequestBody FishSpeciesDTO.Request request) {
-        FishSpecies fish = new FishSpecies();
-        fish.setType(request.getType());
-        fish.setDescription(request.getDescription());
-        fish.setProbability(request.getProbability());
-        fish.setSWeight(request.getSWeight());
-        fish.setAWeight(request.getAWeight());
-        fish.setBWeight(request.getBWeight());
-        fish.setCWeight(request.getCWeight());
-        fish.setMean(request.getMean());
-        fish.setStandardDeviation(request.getStandardDeviation());
-        fish.setStatus(request.getStatus());
-        FishSpecies savedFish = fishSpeciesRepository.save(fish);
-        return ResponseEntity.ok(mapToResponse(savedFish));
+    public ResponseEntity<FishSpeciesDTO.Response> createFishSpecies(@RequestBody FishSpeciesDTO.Request request) {
+        FishSpecies fishSpecies = new FishSpecies();
+        fishSpecies.setType(request.getType());
+        fishSpecies.setDescription(request.getDescription());
+        fishSpecies.setProbability(request.getProbability());
+        fishSpecies.setSWeight(request.getSWeight());
+        fishSpecies.setAWeight(request.getAWeight());
+        fishSpecies.setBWeight(request.getBWeight());
+        fishSpecies.setCWeight(request.getCWeight());
+        fishSpecies.setMean(request.getMean() != null ? request.getMean() : request.getBWeight());
+        fishSpecies.setStandardDeviation(request.getStandardDeviation());
+        fishSpecies.setStatus(request.getStatus());
+        fishSpecies.setPrice(request.getPrice());
+        fishSpecies.setMinWeight(request.getCWeight());
+        FishSpecies savedFishSpecies = fishSpeciesRepository.save(fishSpecies);
+        return ResponseEntity.ok(mapToResponse(savedFishSpecies));
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteFish(@RequestParam Long fid) {
+    public ResponseEntity<Void> deleteFishSpecies(@RequestParam Long fid) {
         if (fishSpeciesRepository.findById(fid).isEmpty()) {
             return ResponseEntity.notFound().build();
         }

@@ -40,7 +40,7 @@ public class UserController {
     // Create user
     @PostMapping("/create")
     public ResponseEntity<String> createUser(@RequestBody UserDTO.Request request) {
-        if (!userService.userExists(request.getUserId())) {
+        if (userService.userExists(request.getUserId())) {
             return ResponseEntity.status(409).body("User already exists");
         }
         userService.createUser(request);

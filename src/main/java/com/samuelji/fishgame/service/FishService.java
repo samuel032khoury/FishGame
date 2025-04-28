@@ -34,25 +34,28 @@ public class FishService {
         List<FishSpecies> fishList = fishSpeciesRepository.findByStatusTrue();
         FishSpecies fishChosen = selectRandomFishByProbability(fishList);
 
-        double weight = 0;
-        while (weight <= 0) {
-            weight = generateRandomWeight(fishChosen);
-        }
-
+        double weight = generateRandomWeight(fishChosen);
+        String rank = determineQualityRank(weight, fishChosen);
         String imageUrl = selectFishImageBasedOnWeight(weight, fishChosen);
 
         Fish fish = new Fish();
         fish.setUserId(userId);
         fish.setType(fishChosen.getType());
-        fish.setPrice(1.0);
+        fish.setPrice(fishChosen.getPrice());
         fish.setWeight(weight);
         fish.setUrl(imageUrl);
         fish.setDescription(fishChosen.getDescription());
         fishRepository.save(fish);
         user.getFishInventory().put(fish.getId(), fish);
         userRepository.save(user);
-
-        return CaughtFishDTO.Response.build(fish);
+        CaughtFishDTO.Response response = new CaughtFishDTO.Response();
+        response.setFish(fishChosen.getType());
+        response.setWeight(weight);
+        response.setDescription(fishChosen.getDescription());
+        response.setImageUrl(imageUrl);
+        response.setRank(rank);
+        response.setStatus("success");
+        return response;
     }
 
     private FishSpecies selectRandomFishByProbability(List<FishSpecies> fishList) {
@@ -78,7 +81,7 @@ public class FishService {
         double normalDistributedRandom = Math.sqrt(-2.0 * Math.log(randomValue1))
                 * Math.sin(2.0 * Math.PI * randomValue2);
 
-        return Math.max(0, meanWeight + weightVariation * normalDistributedRandom);
+        return Math.max(fish.getMinWeight(), meanWeight + weightVariation * normalDistributedRandom);
     }
 
     private String selectFishImageBasedOnWeight(double weight, FishSpecies fishChosen) {
