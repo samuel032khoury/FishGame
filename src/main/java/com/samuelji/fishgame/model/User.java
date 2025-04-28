@@ -1,6 +1,6 @@
 package com.samuelji.fishgame.model;
 
-import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -31,6 +31,5 @@ public class User {
     private String rodType;
 
     @ElementCollection
-    private List<String> fishInventory;
-
+    private Map<Long, Fish> fishInventory;
 }

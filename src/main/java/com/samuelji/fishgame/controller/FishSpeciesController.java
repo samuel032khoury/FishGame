@@ -12,19 +12,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.samuelji.fishgame.dto.FishSpeciesDTO;
-import com.samuelji.fishgame.model.Fish;
-import com.samuelji.fishgame.repository.FishRepository;
+import com.samuelji.fishgame.model.FishSpecies;
+import com.samuelji.fishgame.repository.FishSpeciesRepository;
 
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("/admin/fish")
+@RequestMapping("/admin/fish-species")
 @AllArgsConstructor
-public class FishManagementController {
+public class FishSpeciesController {
 
-    private FishRepository fishRepository;
+    private FishSpeciesRepository fishSpeciesRepository;
 
-    private FishSpeciesDTO.Response mapToResponse(Fish fish) {
+    private FishSpeciesDTO.Response mapToResponse(FishSpecies fish) {
         FishSpeciesDTO.Response response = new FishSpeciesDTO.Response();
         response.setId(fish.getId());
         response.setType(fish.getType());
@@ -35,7 +35,7 @@ public class FishManagementController {
 
     @GetMapping("/list")
     public ResponseEntity<List<FishSpeciesDTO.Response>> getAllFishTypes() {
-        List<Fish> fishList = fishRepository.findAll();
+        List<FishSpecies> fishList = fishSpeciesRepository.findAll();
         if (fishList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -47,7 +47,7 @@ public class FishManagementController {
 
     @PostMapping("/create")
     public ResponseEntity<FishSpeciesDTO.Response> createFish(@RequestBody FishSpeciesDTO.Request request) {
-        Fish fish = new Fish();
+        FishSpecies fish = new FishSpecies();
         fish.setType(request.getType());
         fish.setDescription(request.getDescription());
         fish.setProbability(request.getProbability());
@@ -58,16 +58,16 @@ public class FishManagementController {
         fish.setMean(request.getMean());
         fish.setStandardDeviation(request.getStandardDeviation());
         fish.setStatus(request.getStatus());
-        Fish savedFish = fishRepository.save(fish);
+        FishSpecies savedFish = fishSpeciesRepository.save(fish);
         return ResponseEntity.ok(mapToResponse(savedFish));
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteFish(@RequestParam Long fid) {
-        if (fishRepository.findById(fid).isEmpty()) {
+        if (fishSpeciesRepository.findById(fid).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        fishRepository.deleteById(fid);
+        fishSpeciesRepository.deleteById(fid);
         return ResponseEntity.ok().build();
     }
 }

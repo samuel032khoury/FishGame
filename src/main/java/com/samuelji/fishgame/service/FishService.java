@@ -1,18 +1,20 @@
 package com.samuelji.fishgame.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.samuelji.fishgame.dto.CaughtFishDTO;
 import com.samuelji.fishgame.model.Fish;
-import com.samuelji.fishgame.model.Inventory;
+import com.samuelji.fishgame.model.FishSpecies;
+import com.samuelji.fishgame.model.User;
 import com.samuelji.fishgame.repository.FishImagesRepository;
 import com.samuelji.fishgame.repository.FishRepository;
-import com.samuelji.fishgame.repository.InventoryRepository;
+import com.samuelji.fishgame.repository.FishSpeciesRepository;
 import com.samuelji.fishgame.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -23,12 +25,14 @@ import lombok.AllArgsConstructor;
 public class FishService {
     private final UserRepository userRepository;
     private final FishRepository fishRepository;
+    private final FishSpeciesRepository fishSpeciesRepository;
     private final FishImagesRepository fishImagesRepository;
-    private final InventoryRepository inventoryRepository;
 
-    public Map<String, Object> catchFish(String userId) {
-        List<Fish> fishList = fishRepository.findByStatusTrue();
-        Fish fishChosen = selectRandomFishByProbability(fishList);
+    public CaughtFishDTO.Response catchFish(String userId) throws BadRequestException {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+        List<FishSpecies> fishList = fishSpeciesRepository.findByStatusTrue();
+        FishSpecies fishChosen = selectRandomFishByProbability(fishList);
 
         double weight = 0;
         while (weight <= 0) {
@@ -37,28 +41,25 @@ public class FishService {
 
         String imageUrl = selectFishImageBasedOnWeight(weight, fishChosen);
 
-        Inventory inventory = new Inventory();
-        inventory.setUserId(userId);
-        inventory.setType(fishChosen.getType());
-        inventory.setPrice(1.0);
-        inventory.setWeight(weight);
-        inventory.setUrl(imageUrl);
-        inventory.setDescription(fishChosen.getDescription());
-        inventoryRepository.save(inventory);
+        Fish fish = new Fish();
+        fish.setUserId(userId);
+        fish.setType(fishChosen.getType());
+        fish.setPrice(1.0);
+        fish.setWeight(weight);
+        fish.setUrl(imageUrl);
+        fish.setDescription(fishChosen.getDescription());
+        fishRepository.save(fish);
+        user.getFishInventory().put(fish.getId(), fish);
+        userRepository.save(user);
 
-        return Map.of(
-                "fish", fishChosen.getType(),
-                "weight", weight,
-                "description", fishChosen.getDescription(),
-                "imageUrl", imageUrl,
-                "status", "Successfully caught a fish!");
+        return CaughtFishDTO.Response.build(fish);
     }
 
-    private Fish selectRandomFishByProbability(List<Fish> fishList) {
-        double totalProbability = fishList.stream().mapToDouble(Fish::getProbability).sum();
+    private FishSpecies selectRandomFishByProbability(List<FishSpecies> fishList) {
+        double totalProbability = fishList.stream().mapToDouble(FishSpecies::getProbability).sum();
         double randomProbability = Math.random() * totalProbability;
         double currentProb = 0;
-        for (Fish fish : fishList) {
+        for (FishSpecies fish : fishList) {
             currentProb += fish.getProbability();
             if (currentProb > randomProbability) {
                 return fish;
@@ -67,7 +68,7 @@ public class FishService {
         return fishList.get(fishList.size() - 1);
     }
 
-    private double generateRandomWeight(Fish fish) {
+    private double generateRandomWeight(FishSpecies fish) {
         double meanWeight = fish.getMean();
         double weightVariation = fish.getStandardDeviation();
 
@@ -80,7 +81,7 @@ public class FishService {
         return Math.max(0, meanWeight + weightVariation * normalDistributedRandom);
     }
 
-    private String selectFishImageBasedOnWeight(double weight, Fish fishChosen) {
+    private String selectFishImageBasedOnWeight(double weight, FishSpecies fishChosen) {
         String defaultImgUrl = "https://s3.us-west-1.amazonaws.com/fishing.web.images/Fishing+Game+Images/Other/pearl.png";
 
         return fishImagesRepository.findByType(fishChosen.getType())
@@ -92,7 +93,7 @@ public class FishService {
                 .orElse(defaultImgUrl);
     }
 
-    private String determineQualityRank(double weight, Fish fishChosen) {
+    private String determineQualityRank(double weight, FishSpecies fishChosen) {
         if (weight > fishChosen.getSWeight())
             return "SS";
         if (weight > fishChosen.getAWeight())
@@ -105,38 +106,45 @@ public class FishService {
     }
 
     @Transactional
-    public Map<String, Object> sellFish(String userId) {
-        List<Inventory> inventories = inventoryRepository.findByUserId(userId);
-        if (inventories.isEmpty()) {
-            return Map.of("revenue", 0);
+    public int sellAllFish(String userId) throws BadRequestException {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+        List<Fish> fishInventory = fishRepository.findByUserId(userId);
+        if (fishInventory.isEmpty()) {
+            return 0;
         }
-        double totalRevenue = inventories.stream()
-                .mapToDouble(inventory -> inventory.getWeight() * inventory.getPrice()).sum();
-        inventoryRepository.deleteAll(inventories);
-        userRepository.findByUserId(userId).ifPresent(user -> {
-            user.setCoins(user.getCoins() + (int) totalRevenue);
-            userRepository.save(user);
-        });
 
-        return Map.of("revenue", totalRevenue);
+        return sellFish(user, fishInventory);
     }
 
-    public Map<String, Object> sellFishByType(String userId, String fishType, int amount) {
+    @Transactional
+    public int sellFishByType(String userId, String fishType, int amount) throws BadRequestException {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (amount <= 0) {
+            throw new BadRequestException("Amount must be greater than 0");
+        }
         Pageable pageRequest = PageRequest.of(0, amount);
-        List<Inventory> inventoriesOfType = inventoryRepository.findByUserIdAndType(userId, fishType, pageRequest);
-        if (inventoriesOfType.isEmpty()) {
-            return Map.of("revenue", 0);
+        List<Fish> fishInventoryOfType = fishRepository.findByUserIdAndType(userId, fishType, pageRequest);
+        if (fishInventoryOfType.isEmpty()) {
+            throw new BadRequestException("Not enough fish of this type to sell");
         }
-        if (inventoriesOfType.size() < amount) {
-            return Map.of("error", "Not enough fish of this type to sell");
+        if (fishInventoryOfType.size() < amount) {
+            throw new BadRequestException("Not enough fish of this type to sell");
         }
-        double totalRevenue = inventoriesOfType.stream()
-                .mapToDouble(inventory -> inventory.getWeight() * inventory.getPrice()).sum();
-        inventoryRepository.deleteAll(inventoriesOfType);
-        userRepository.findByUserId(userId).ifPresent(user -> {
-            user.setCoins(user.getCoins() + (int) totalRevenue);
-            userRepository.save(user);
-        });
-        return Map.of("revenue", totalRevenue);
+
+        return sellFish(user, fishInventoryOfType);
+    }
+
+    private int sellFish(User user, List<Fish> fishInventory) {
+        int totalRevenue = (int) (fishInventory.stream()
+                .mapToDouble(fish -> fish.getWeight() * fish.getPrice()).sum() * 100);
+        user.getFishInventory().keySet().removeAll(fishInventory.stream()
+                .map(Fish::getId).toList());
+        fishRepository.deleteAll(fishInventory);
+        user.setCoins(user.getCoins() + totalRevenue);
+        userRepository.save(user);
+        return totalRevenue;
     }
 }

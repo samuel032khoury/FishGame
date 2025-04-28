@@ -2,6 +2,8 @@ package com.samuelji.fishgame.controller;
 
 import java.util.Map;
 
+import org.apache.coyote.BadRequestException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,19 +27,33 @@ public class FishController {
     }
 
     @PostMapping("/catch")
-    public Map<String, Object> catchFish(@RequestParam String userId) {
-        return fishService.catchFish(userId);
+    public ResponseEntity<?> catchFish(@RequestParam String userId) {
+        try {
+            return ResponseEntity.ok(fishService.catchFish(userId));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/sellAll")
-    public Map<String, Object> sellFish(@RequestParam String userId) {
-        return fishService.sellFish(userId);
+    public ResponseEntity<?> sellAllFish(@RequestParam String userId) {
+        try {
+            int revenue = fishService.sellAllFish(userId);
+            return ResponseEntity.ok(Map.of("revenue", revenue));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/sell")
-    public Map<String, Object> sellFishByType(@RequestParam String userId, @RequestParam String fishType,
+    public ResponseEntity<?> sellFishByType(@RequestParam String userId, @RequestParam String fishType,
             @RequestParam int amount) {
-        return fishService.sellFishByType(userId, fishType, amount);
+        try {
+            int revenue = fishService.sellFishByType(userId, fishType, amount);
+            return ResponseEntity.ok(Map.of("revenue", revenue));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
 }

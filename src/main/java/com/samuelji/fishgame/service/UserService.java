@@ -1,10 +1,8 @@
 package com.samuelji.fishgame.service;
 
-import java.util.Map;
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
+import com.samuelji.fishgame.dto.UserDTO;
 import com.samuelji.fishgame.model.User;
 import com.samuelji.fishgame.repository.UserRepository;
 
@@ -19,53 +17,38 @@ public class UserService {
         return userRepository.findByUserId(userId).isPresent();
     }
 
-    public void createUser(User user) {
-        user.setCoins(0);
-        user.setDiamonds(0);
-        user.setLevel(1);
-        user.setCurrentExperience(0);
-        user.setCurrentExperience(100);
-        user.setRodType("Basic");
+    public void createUser(UserDTO.Request request) {
+        User user = new User();
+        user.setUserId(request.getUserId());
+        user.setUserName(request.getUserName());
+        user.setCoins(request.getCoins());
+        user.setDiamonds(request.getDiamonds());
+        user.setLevel(request.getLevel());
+        user.setCurrentExperience(request.getCurrentExperience());
+        user.setExperienceForNextLevel(request.getExperienceForNextLevel());
+        user.setRodType(request.getRodType());
+        user.setFishInventory(request.getFishInventory());
         userRepository.save(user);
     }
 
-    public Map<String, Object> getUserBasicInfo(String userId) {
-        Optional<User> user = userRepository.findByUserId(userId);
-        if (user.isEmpty()) {
-            return Map.of("code", 404, "msg", "User not found");
-        }
-        return Map.of("code", 200, "msg", "Success", "data", Map.of(
-                "userName", user.get().getUserName(),
-                "rodType", user.get().getRodType()));
+    public UserDTO.BasicInfoResponse getUserBasicInfo(String userId) {
+        User user = userRepository.findByUserId(userId).get();
+        return new UserDTO.BasicInfoResponse(user.getUserName(), user.getRodType());
     }
 
-    public Map<String, Object> getUserFinanceInfo(String userId) {
-        Optional<User> user = userRepository.findByUserId(userId);
-        if (user.isEmpty()) {
-            return Map.of("code", 404, "msg", "User not found");
-        }
-        return Map.of("code", 200, "msg", "Success", "data", Map.of(
-                "coins", user.get().getCoins(),
-                "diamonds", user.get().getDiamonds()));
+    public UserDTO.FinanceInfoResponse getUserFinanceInfo(String userId) {
+        User user = userRepository.findByUserId(userId).get();
+        return new UserDTO.FinanceInfoResponse(user.getCoins(), user.getDiamonds());
     }
 
-    public Map<String, Object> getUserLevelInfo(String userId) {
-        Optional<User> user = userRepository.findByUserId(userId);
-        if (user.isEmpty()) {
-            return Map.of("code", 404, "msg", "User not found");
-        }
-        return Map.of("code", 200, "msg", "Success", "data", Map.of(
-                "level", user.get().getLevel(),
-                "currentExperience", user.get().getCurrentExperience(),
-                "experienceForNextLevel", user.get().getExperienceForNextLevel()));
+    public UserDTO.LevelInfoResponse getUserLevelInfo(String userId) {
+        User user = userRepository.findByUserId(userId).get();
+        return new UserDTO.LevelInfoResponse(user.getLevel(), user.getCurrentExperience(),
+                user.getExperienceForNextLevel());
     }
 
-    public Map<String, Object> getUserInventoryInfo(String userId) {
-        Optional<User> user = userRepository.findByUserId(userId);
-        if (user.isEmpty()) {
-            return Map.of("code", 404, "msg", "User not found");
-        }
-        return Map.of("code", 200, "msg", "Success", "data", Map.of(
-                "fishInventory", user.get().getFishInventory()));
+    public UserDTO.InventoryInfoResponse getUserInventoryInfo(String userId) {
+        User user = userRepository.findByUserId(userId).get();
+        return new UserDTO.InventoryInfoResponse(user.getFishInventory());
     }
 }
