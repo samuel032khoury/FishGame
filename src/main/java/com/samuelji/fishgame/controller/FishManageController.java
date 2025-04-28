@@ -23,6 +23,7 @@ public class FishManageController {
 
     @PostMapping("/create")
     public Fish createFish(@RequestBody Fish fish) {
+
         return fishRepository.save(fish);
     }
 

@@ -3,8 +3,6 @@ package com.samuelji.fishgame.security;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 
-import org.springframework.stereotype.Component;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

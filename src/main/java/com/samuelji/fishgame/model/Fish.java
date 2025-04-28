@@ -1,5 +1,7 @@
 package com.samuelji.fishgame.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,9 +17,13 @@ public class Fish {
     private String type;
     private String description;
     private Double probability;
+    @JsonProperty("sWeight")
     private Double sWeight;
+    @JsonProperty("aWeight")
     private Double aWeight;
+    @JsonProperty("bWeight")
     private Double bWeight;
+    @JsonProperty("cWeight")
     private Double cWeight;
     private Double mean;
     private Double standardDeviation = 0.625;
