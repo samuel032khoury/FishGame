@@ -10,7 +10,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
 
-@Component
 public class DynamicRateLimiter implements Filter {
 
     private static final long MAX_REQUESTS_NORMAL = 1000; // 正常流量下的请求限制
