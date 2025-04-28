@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.samuelji.fishgame.model.Fish;
@@ -28,7 +30,11 @@ public class FishService {
         List<Fish> fishList = fishRepository.findByStatusTrue();
         Fish fishChosen = selectRandomFishByProbability(fishList);
 
-        double weight = generateRandomWeight(fishChosen);
+        double weight = 0;
+        while (weight <= 0) {
+            weight = generateRandomWeight(fishChosen);
+        }
+
         String imageUrl = selectFishImageBasedOnWeight(weight, fishChosen);
 
         Inventory inventory = new Inventory();
@@ -71,7 +77,7 @@ public class FishService {
         double normalDistributedRandom = Math.sqrt(-2.0 * Math.log(randomValue1))
                 * Math.sin(2.0 * Math.PI * randomValue2);
 
-        return meanWeight + weightVariation * normalDistributedRandom;
+        return Math.max(0, meanWeight + weightVariation * normalDistributedRandom);
     }
 
     private String selectFishImageBasedOnWeight(double weight, Fish fishChosen) {
@@ -112,6 +118,25 @@ public class FishService {
             userRepository.save(user);
         });
 
+        return Map.of("revenue", totalRevenue);
+    }
+
+    public Map<String, Object> sellFishByType(String userId, String fishType, int amount) {
+        Pageable pageRequest = PageRequest.of(0, amount);
+        List<Inventory> inventoriesOfType = inventoryRepository.findByUserIdAndType(userId, fishType, pageRequest);
+        if (inventoriesOfType.isEmpty()) {
+            return Map.of("revenue", 0);
+        }
+        if (inventoriesOfType.size() < amount) {
+            return Map.of("error", "Not enough fish of this type to sell");
+        }
+        double totalRevenue = inventoriesOfType.stream()
+                .mapToDouble(inventory -> inventory.getWeight() * inventory.getPrice()).sum();
+        inventoryRepository.deleteAll(inventoriesOfType);
+        userRepository.findByUserId(userId).ifPresent(user -> {
+            user.setCoins(user.getCoins() + (int) totalRevenue);
+            userRepository.save(user);
+        });
         return Map.of("revenue", totalRevenue);
     }
 }

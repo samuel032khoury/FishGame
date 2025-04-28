@@ -29,9 +29,15 @@ public class FishController {
         return fishService.catchFish(userId);
     }
 
-    @PostMapping("/sell")
+    @PostMapping("/sellAll")
     public Map<String, Object> sellFish(@RequestParam String userId) {
         return fishService.sellFish(userId);
+    }
+
+    @PostMapping("/sell")
+    public Map<String, Object> sellFishByType(@RequestParam String userId, @RequestParam String fishType,
+            @RequestParam int amount) {
+        return fishService.sellFishByType(userId, fishType, amount);
     }
 
 }
