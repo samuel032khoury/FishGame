@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.samuelji.fishgame.model.Fish;
-import com.samuelji.fishgame.model.FishImages;
 import com.samuelji.fishgame.model.Inventory;
 import com.samuelji.fishgame.repository.FishImagesRepository;
 import com.samuelji.fishgame.repository.FishRepository;
@@ -27,10 +26,10 @@ public class FishService {
 
     public Map<String, Object> catchFish(String userId) {
         List<Fish> fishList = fishRepository.findByStatusTrue();
-        Fish fishChosen = probabilityHelper(fishList);
+        Fish fishChosen = selectRandomFishByProbability(fishList);
 
-        double weight = weightGenerator(fishChosen);
-        String imageUrl = imageHelper(weight, fishChosen);
+        double weight = generateRandomWeight(fishChosen);
+        String imageUrl = selectFishImageBasedOnWeight(weight, fishChosen);
 
         Inventory inventory = new Inventory();
         inventory.setUserId(userId);
@@ -47,10 +46,9 @@ public class FishService {
                 "description", fishChosen.getDescription(),
                 "imageUrl", imageUrl,
                 "status", "Successfully caught a fish!");
-
     }
 
-    private Fish probabilityHelper(List<Fish> fishList) {
+    private Fish selectRandomFishByProbability(List<Fish> fishList) {
         double totalProbability = fishList.stream().mapToDouble(Fish::getProbability).sum();
         double randomProbability = Math.random() * totalProbability;
         double currentProb = 0;
@@ -63,32 +61,32 @@ public class FishService {
         return fishList.get(fishList.size() - 1);
     }
 
-    private double weightGenerator(Fish fish) {
-        double mean = fish.getMean();
-        double stdDev = fish.getStandardDeviation();
-        double u1 = Math.random();
-        double u2 = Math.random();
-        double randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
-        return mean + stdDev * randStdNormal;
+    private double generateRandomWeight(Fish fish) {
+        double meanWeight = fish.getMean();
+        double weightVariation = fish.getStandardDeviation();
+
+        double randomValue1 = Math.random();
+        double randomValue2 = Math.random();
+
+        double normalDistributedRandom = Math.sqrt(-2.0 * Math.log(randomValue1))
+                * Math.sin(2.0 * Math.PI * randomValue2);
+
+        return meanWeight + weightVariation * normalDistributedRandom;
     }
 
-    private String imageHelper(double weight, Fish fishChosen) {
+    private String selectFishImageBasedOnWeight(double weight, Fish fishChosen) {
         String defaultImgUrl = "https://s3.us-west-1.amazonaws.com/fishing.web.images/Fishing+Game+Images/Other/pearl.png";
 
-        Optional<FishImages> fishImgOpt = fishImagesRepository.findByType(fishChosen.getType());
-        if (fishImgOpt.isEmpty())
-            return defaultImgUrl;
-
-        FishImages fishImg = fishImgOpt.get();
-        String score = evaluate(weight, fishChosen);
-
-        if (fishImg.getImages() != null && fishImg.getImages().get(score) != null) {
-            return fishImg.getImages().get(score);
-        }
-        return defaultImgUrl;
+        return fishImagesRepository.findByType(fishChosen.getType())
+                .map(fishImages -> {
+                    String qualityRank = determineQualityRank(weight, fishChosen);
+                    return Optional.ofNullable(fishImages.getImages().get(qualityRank))
+                            .orElse(defaultImgUrl);
+                })
+                .orElse(defaultImgUrl);
     }
 
-    private String evaluate(double weight, Fish fishChosen) {
+    private String determineQualityRank(double weight, Fish fishChosen) {
         if (weight > fishChosen.getSWeight())
             return "SS";
         if (weight > fishChosen.getAWeight())

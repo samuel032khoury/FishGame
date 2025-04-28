@@ -3,16 +3,17 @@ package com.samuelji.fishgame.service;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.samuelji.fishgame.model.User;
 import com.samuelji.fishgame.repository.UserRepository;
 
+import lombok.AllArgsConstructor;
+
 @Service
+@AllArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public boolean userExists(String userId) {
         return userRepository.findByUserId(userId).isPresent();

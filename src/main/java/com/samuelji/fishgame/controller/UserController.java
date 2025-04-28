@@ -5,7 +5,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,12 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.samuelji.fishgame.model.User;
 import com.samuelji.fishgame.service.UserService;
 
+import lombok.AllArgsConstructor;
+
 @RestController
 @RequestMapping("/user")
+@AllArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     private static final String API_PASSWORD = "default_password";
 
