@@ -3,7 +3,7 @@ package com.samuelji.fishgame.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public class CaughtFishDTO {
+public class UserCaughtFishDTO {
     @Data
     @NoArgsConstructor
     public static class Response {
@@ -12,6 +12,5 @@ public class CaughtFishDTO {
         private String description;
         private String imageUrl;
         private String rank;
-        private String status;
     }
 }

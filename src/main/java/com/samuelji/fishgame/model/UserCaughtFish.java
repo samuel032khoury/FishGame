@@ -1,5 +1,7 @@
 package com.samuelji.fishgame.model;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Entity;
@@ -30,9 +32,23 @@ public class UserCaughtFish {
     @JsonBackReference
     private FishSpecies fishSpecies;
 
-    private String type;
-    private Double price;
     private Double weight;
-    private String url;
-    private String description;
+
+    public String getRank() {
+        if (weight > fishSpecies.getSWeight())
+            return "SS";
+        if (weight > fishSpecies.getAWeight())
+            return "S";
+        if (weight > fishSpecies.getBWeight())
+            return "A";
+        if (weight > fishSpecies.getCWeight())
+            return "B";
+        return "C";
+    }
+
+    public String getImageUrl() {
+        return Optional.ofNullable(fishSpecies.getImages())
+                .map(images -> images.get(getRank()))
+                .orElse("https://s3.us-west-1.amazonaws.com/fishing.web.images/Fishing+Game+Images/Other/pearl.png");
+    }
 }

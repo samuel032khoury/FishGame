@@ -12,5 +12,5 @@ import com.samuelji.fishgame.model.UserCaughtFish;
 public interface UserCaughtFishRepository extends JpaRepository<UserCaughtFish, Long> {
     List<UserCaughtFish> findByUser_UserId(String userId);
 
-    List<UserCaughtFish> findByUser_UserIdAndType(String userId, String fishType, Pageable pageable);
+    List<UserCaughtFish> findByUser_UserIdAndFishSpecies_Type(String userId, String fishType, Pageable pageable);
 }
