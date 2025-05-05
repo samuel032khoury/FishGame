@@ -1,5 +1,7 @@
 package com.samuelji.fishgame.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,10 +26,12 @@ public class PurchasedItem {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonBackReference
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "shop_item_id")
+    @JsonBackReference
     private ShopItem shopItem;
 
     private Integer quantity;

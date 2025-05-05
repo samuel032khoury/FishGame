@@ -7,7 +7,7 @@ public class CaughtFishDTO {
     @Data
     @NoArgsConstructor
     public static class Response {
-        private String fish;
+        private String type;
         private double weight;
         private String description;
         private String imageUrl;

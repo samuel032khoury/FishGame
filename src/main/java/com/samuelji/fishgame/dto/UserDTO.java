@@ -1,9 +1,8 @@
 package com.samuelji.fishgame.dto;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import com.samuelji.fishgame.model.Fish;
+import com.samuelji.fishgame.model.UserCaughtFish;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,13 +12,7 @@ public class UserDTO {
     public static class Request {
         private String userId;
         private String userName;
-        private int coins = 0;
-        private int diamonds = 0;
-        private int level = 1;
-        private int currentExperience = 0;
-        private int experienceForNextLevel = 100;
-        private String rodType = "Basic";
-        private Map<Long, Fish> fishInventory = new HashMap<>();
+
     }
 
     @Data
@@ -47,6 +40,6 @@ public class UserDTO {
     @Data
     @AllArgsConstructor
     public static class InventoryInfoResponse {
-        private Map<Long, Fish> fishInventory;
+        private List<UserCaughtFish> fishInventory;
     }
 }

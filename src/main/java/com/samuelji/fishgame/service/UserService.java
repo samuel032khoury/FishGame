@@ -21,13 +21,6 @@ public class UserService {
         User user = new User();
         user.setUserId(request.getUserId());
         user.setUserName(request.getUserName());
-        user.setCoins(request.getCoins());
-        user.setDiamonds(request.getDiamonds());
-        user.setLevel(request.getLevel());
-        user.setCurrentExperience(request.getCurrentExperience());
-        user.setExperienceForNextLevel(request.getExperienceForNextLevel());
-        user.setRodType(request.getRodType());
-        user.setFishInventory(request.getFishInventory());
         userRepository.save(user);
     }
 

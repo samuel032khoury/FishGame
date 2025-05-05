@@ -9,11 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.samuelji.fishgame.dto.CaughtFishDTO;
-import com.samuelji.fishgame.model.Fish;
+import com.samuelji.fishgame.model.UserCaughtFish;
 import com.samuelji.fishgame.model.FishSpecies;
 import com.samuelji.fishgame.model.User;
 import com.samuelji.fishgame.repository.FishImagesRepository;
-import com.samuelji.fishgame.repository.FishRepository;
+import com.samuelji.fishgame.repository.UserCaughtFishRepository;
 import com.samuelji.fishgame.repository.FishSpeciesRepository;
 import com.samuelji.fishgame.repository.UserRepository;
 
@@ -24,7 +24,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class FishService {
     private final UserRepository userRepository;
-    private final FishRepository fishRepository;
+    private final UserCaughtFishRepository userCaughtFishRepository;
     private final FishSpeciesRepository fishSpeciesRepository;
     private final FishImagesRepository fishImagesRepository;
 
@@ -38,18 +38,17 @@ public class FishService {
         String rank = determineQualityRank(weight, fishChosen);
         String imageUrl = selectFishImageBasedOnWeight(weight, fishChosen);
 
-        Fish fish = new Fish();
-        fish.setUserId(userId);
+        UserCaughtFish fish = new UserCaughtFish();
+        fish.setUser(userRepository.getReferenceById(user.getId()));
         fish.setType(fishChosen.getType());
         fish.setPrice(fishChosen.getPrice());
         fish.setWeight(weight);
         fish.setUrl(imageUrl);
         fish.setDescription(fishChosen.getDescription());
-        fishRepository.save(fish);
-        user.getFishInventory().put(fish.getId(), fish);
+        userCaughtFishRepository.save(fish);
         userRepository.save(user);
         CaughtFishDTO.Response response = new CaughtFishDTO.Response();
-        response.setFish(fishChosen.getType());
+        response.setType(fishChosen.getType());
         response.setWeight(weight);
         response.setDescription(fishChosen.getDescription());
         response.setImageUrl(imageUrl);
@@ -112,7 +111,7 @@ public class FishService {
     public int sellAllFish(String userId) throws BadRequestException {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
-        List<Fish> fishInventory = fishRepository.findByUserId(userId);
+        List<UserCaughtFish> fishInventory = userCaughtFishRepository.findByUser_UserId(userId);
         if (fishInventory.isEmpty()) {
             return 0;
         }
@@ -129,7 +128,8 @@ public class FishService {
             throw new BadRequestException("Amount must be greater than 0");
         }
         Pageable pageRequest = PageRequest.of(0, amount);
-        List<Fish> fishInventoryOfType = fishRepository.findByUserIdAndType(userId, fishType, pageRequest);
+        List<UserCaughtFish> fishInventoryOfType = userCaughtFishRepository.findByUser_UserIdAndType(userId, fishType,
+                pageRequest);
         if (fishInventoryOfType.isEmpty()) {
             throw new BadRequestException("Not enough fish of this type to sell");
         }
@@ -140,12 +140,10 @@ public class FishService {
         return sellFish(user, fishInventoryOfType);
     }
 
-    private int sellFish(User user, List<Fish> fishInventory) {
+    private int sellFish(User user, List<UserCaughtFish> fishInventory) {
         int totalRevenue = (int) (fishInventory.stream()
                 .mapToDouble(fish -> fish.getWeight() * fish.getPrice()).sum() * 100);
-        user.getFishInventory().keySet().removeAll(fishInventory.stream()
-                .map(Fish::getId).toList());
-        fishRepository.deleteAll(fishInventory);
+        userCaughtFishRepository.deleteAll(fishInventory);
         user.setCoins(user.getCoins() + totalRevenue);
         userRepository.save(user);
         return totalRevenue;
