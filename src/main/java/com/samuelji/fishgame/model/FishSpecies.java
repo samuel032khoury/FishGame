@@ -46,7 +46,7 @@ public class FishSpecies {
     private final Map<String, String> images = new HashMap<>();
 
     @OneToMany(mappedBy = "fishSpecies")
-    @JsonManagedReference
+    @JsonManagedReference("fish-caught")
     private List<UserCaughtFish> userCaughtFish = new java.util.ArrayList<>();
 
     public void setImage(String rank, String imageUrl) {

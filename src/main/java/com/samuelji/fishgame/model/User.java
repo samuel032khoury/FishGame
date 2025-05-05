@@ -38,10 +38,10 @@ public class User {
     private String rodType = "Basic";
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("user-fish")
     private List<UserCaughtFish> fishInventory = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
-    @JsonManagedReference
+    @JsonManagedReference("user-items")
     private Set<PurchasedItem> purchasedItems = new HashSet<>();
 }

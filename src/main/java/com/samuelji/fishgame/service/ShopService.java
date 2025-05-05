@@ -19,6 +19,7 @@ import com.samuelji.fishgame.repository.PurchasedItemRepository;
 import com.samuelji.fishgame.repository.ShopItemRepository;
 import com.samuelji.fishgame.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -37,6 +38,7 @@ public class ShopService {
     private class ItemNotFoundException extends NotFoundException {
     }
 
+    @Transactional
     public ResponseEntity<String> purchaseItem(String userId, String itemName, String itemCategory) {
         String lockKey = String.format("shop_items_lock_%s_%s", userId, itemName);
         Boolean lockAcquired = redis.opsForValue().setIfAbsent(lockKey, "locked", 10, TimeUnit.SECONDS);

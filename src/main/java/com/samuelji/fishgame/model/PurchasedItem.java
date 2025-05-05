@@ -26,12 +26,12 @@ public class PurchasedItem {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonBackReference
+    @JsonBackReference("user-items")
     private User user;
 
     @ManyToOne
+    @JsonBackReference("item-purchases")
     @JoinColumn(name = "shop_item_id")
-    @JsonBackReference
     private ShopItem shopItem;
 
     private Integer quantity;

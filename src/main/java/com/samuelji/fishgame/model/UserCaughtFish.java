@@ -24,12 +24,12 @@ public class UserCaughtFish {
 
     @ManyToOne
     @JoinColumn(name = "uid")
-    @JsonBackReference
+    @JsonBackReference("user-fish")
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "fish_species_id")
-    @JsonBackReference
+    @JsonBackReference("fish-caught")
     private FishSpecies fishSpecies;
 
     private Double weight;

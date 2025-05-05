@@ -3,6 +3,8 @@ package com.samuelji.fishgame.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,5 +26,6 @@ public class ShopItem {
     private Double price;
 
     @OneToMany(mappedBy = "shopItem")
+    @JsonManagedReference("item-purchases")
     private Set<PurchasedItem> purchasedItems = new HashSet<>();
 }
