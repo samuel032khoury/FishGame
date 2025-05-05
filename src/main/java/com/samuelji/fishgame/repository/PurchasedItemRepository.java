@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.samuelji.fishgame.model.PurchasedItem;
 
 public interface PurchasedItemRepository extends JpaRepository<PurchasedItem, Long> {
-    Optional<PurchasedItem> findByUserIdAndShopItemId(String userId, Long shopItemId);
+    Optional<PurchasedItem> findByUserIdAndShopItemId(Long userId, Long shopItemId);
 }
