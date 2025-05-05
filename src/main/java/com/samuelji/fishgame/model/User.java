@@ -1,6 +1,8 @@
 package com.samuelji.fishgame.model;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -8,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -32,4 +35,7 @@ public class User {
 
     @ElementCollection
     private Map<Long, Fish> fishInventory;
+
+    @OneToMany(mappedBy = "user")
+    private Set<PurchasedItem> purchasedItems = new HashSet<>();
 }
