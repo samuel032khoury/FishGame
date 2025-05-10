@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,7 +55,7 @@ public class AdminController {
         return response;
     }
 
-    @GetMapping("/fish-species/list")
+    @GetMapping("/fish-species")
     public ResponseEntity<List<FishSpeciesDTO.Response>> getAllFishSpecies() {
         List<FishSpecies> fishSpeciesList = fishSpeciesRepository.findAll();
         if (fishSpeciesList.isEmpty()) {
@@ -94,7 +95,7 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/shop-item/list")
+    @GetMapping("/shop-item")
     public ResponseEntity<List<ShopItemDTO>> getAllShopItem() {
         List<ShopItem> shopItemList = shopItemRepository.findAll();
         if (shopItemList.isEmpty()) {
@@ -130,5 +131,26 @@ public class AdminController {
         }
         shopItemRepository.deleteById(pid);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/shop-item/update/{pid}")
+    public ResponseEntity<ShopItemDTO> updateShopItem(@PathVariable Long pid, @RequestBody ShopItemDTO request) {
+        if (shopItemRepository.findById(pid).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        ShopItem shopItem = new ShopItem();
+        shopItem.setId(pid);
+        shopItem.setName(request.getName());
+        shopItem.setDescription(request.getDescription());
+        shopItem.setCategory(request.getCategory());
+        shopItem.setPrice(request.getPrice());
+        shopItem.setLimited(request.getLimited());
+        if (request.getLimited() != null && request.getLimited()) {
+            shopItem.setStock(request.getStock());
+        } else {
+            shopItem.setStock(null);
+        }
+        ShopItem savedShopItem = shopItemRepository.save(shopItem);
+        return ResponseEntity.ok(mapToShopItem(savedShopItem));
     }
 }
