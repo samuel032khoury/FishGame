@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.samuelji.fishgame.dto.FishSpeciesDTO;
+import com.samuelji.fishgame.dto.ShopItemDTO;
 import com.samuelji.fishgame.model.FishSpecies;
+import com.samuelji.fishgame.model.ShopItem;
 import com.samuelji.fishgame.repository.FishSpeciesRepository;
+import com.samuelji.fishgame.repository.ShopItemRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -22,19 +25,32 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AdminController {
     private FishSpeciesRepository fishSpeciesRepository;
+    private ShopItemRepository shopItemRepository;
 
     @GetMapping
     public String adminDashboard() {
         return "Admin Dashboard";
     }
 
-    private FishSpeciesDTO.Response mapToResponse(FishSpecies fish) {
+    private FishSpeciesDTO.Response mapToFishSpeciesDTOResponse(FishSpecies fish) {
         FishSpeciesDTO.Response response = new FishSpeciesDTO.Response();
         response.setId(fish.getId());
         response.setType(fish.getType());
         response.setDescription(fish.getDescription());
         response.setProbability(fish.getProbability());
         response.setPrice(fish.getPrice());
+        return response;
+    }
+
+    private ShopItemDTO mapToShopItem(ShopItem shopItem) {
+        ShopItemDTO response = new ShopItemDTO();
+        response.setId(shopItem.getId());
+        response.setName(shopItem.getName());
+        response.setDescription(shopItem.getDescription());
+        response.setCategory(shopItem.getCategory());
+        response.setPrice(shopItem.getPrice());
+        response.setLimited(shopItem.getLimited());
+        response.setStock(shopItem.getStock());
         return response;
     }
 
@@ -45,7 +61,7 @@ public class AdminController {
             return ResponseEntity.noContent().build();
         }
         List<FishSpeciesDTO.Response> responseList = fishSpeciesList.stream()
-                .map(this::mapToResponse)
+                .map(this::mapToFishSpeciesDTOResponse)
                 .toList();
         return ResponseEntity.ok(responseList);
     }
@@ -66,7 +82,7 @@ public class AdminController {
         fishSpecies.setPrice(request.getPrice());
         fishSpecies.setMinWeight(request.getCWeight());
         FishSpecies savedFishSpecies = fishSpeciesRepository.save(fishSpecies);
-        return ResponseEntity.ok(mapToResponse(savedFishSpecies));
+        return ResponseEntity.ok(mapToFishSpeciesDTOResponse(savedFishSpecies));
     }
 
     @DeleteMapping("/fish-species/delete")
@@ -75,6 +91,44 @@ public class AdminController {
             return ResponseEntity.notFound().build();
         }
         fishSpeciesRepository.deleteById(fid);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/shop-item/list")
+    public ResponseEntity<List<ShopItemDTO>> getAllShopItem() {
+        List<ShopItem> shopItemList = shopItemRepository.findAll();
+        if (shopItemList.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        List<ShopItemDTO> responseList = shopItemList.stream()
+                .map(this::mapToShopItem)
+                .toList();
+        return ResponseEntity.ok(responseList);
+    }
+
+    @PostMapping("/shop-item/create")
+    public ResponseEntity<ShopItemDTO> createShopItem(@RequestBody ShopItemDTO request) {
+        ShopItem shopItem = new ShopItem();
+        shopItem.setName(request.getName());
+        shopItem.setDescription(request.getDescription());
+        shopItem.setCategory(request.getCategory());
+        shopItem.setPrice(request.getPrice());
+        shopItem.setLimited(request.getLimited());
+        if (request.getLimited() != null && request.getLimited()) {
+            shopItem.setStock(request.getStock());
+        } else {
+            shopItem.setStock(null);
+        }
+        ShopItem savedShopItem = shopItemRepository.save(shopItem);
+        return ResponseEntity.ok(mapToShopItem(savedShopItem));
+    }
+
+    @DeleteMapping("/shop-item/delete")
+    public ResponseEntity<Void> deleteShopItem(@RequestParam Long pid) {
+        if (shopItemRepository.findById(pid).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        shopItemRepository.deleteById(pid);
         return ResponseEntity.ok().build();
     }
 }

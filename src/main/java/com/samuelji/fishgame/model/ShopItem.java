@@ -25,6 +25,9 @@ public class ShopItem {
     private String category;
     private Double price;
 
+    private Boolean limited;
+    private Integer stock;
+
     @OneToMany(mappedBy = "shopItem")
     @JsonManagedReference("item-purchases")
     private Set<PurchasedItem> purchasedItems = new HashSet<>();

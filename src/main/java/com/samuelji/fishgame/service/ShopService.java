@@ -40,16 +40,21 @@ public class ShopService {
 
     @Transactional
     public ResponseEntity<String> purchaseItem(String userId, String itemName, String itemCategory) {
-        String lockKey = String.format("shop_items_lock_%s_%s", userId, itemName);
-        Boolean lockAcquired = redis.opsForValue().setIfAbsent(lockKey, "locked", 10, TimeUnit.SECONDS);
-        if (lockAcquired == null || !lockAcquired) {
+        String userLockKey = String.format("shop_items_lock_%s_%s", userId, itemName);
+        Boolean userLockAcquired = redis.opsForValue().setIfAbsent(userLockKey, "locked", 10, TimeUnit.SECONDS);
+        if (userLockAcquired == null || !userLockAcquired) {
             return ResponseEntity.status(429).body("Too many requests, please try again later.");
         }
+
+        String itemLockKey = null;
+        Boolean itemLockAcquired = false;
+
         try {
             User user = userRepository.findByUserId(userId).orElseThrow(UserNotFoundException::new);
             String cacheKey = String.format("shop_item_%s_%s", itemName, itemCategory);
             String cachedValue = redis.opsForValue().get(cacheKey);
             ShopItem shopItem;
+
             if (cachedValue != null) {
                 shopItem = objectMapper.readValue(cachedValue, ShopItem.class);
             } else {
@@ -59,9 +64,30 @@ public class ShopService {
                         shopItem.getId(),
                         shopItem.getName(),
                         shopItem.getDescription(),
-                        shopItem.getCategory(), shopItem.getPrice());
+                        shopItem.getCategory(),
+                        shopItem.getPrice(),
+                        shopItem.getLimited(),
+                        shopItem.getStock());
                 redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(shopItemDTO), 10, TimeUnit.MINUTES);
             }
+
+            if (shopItem.getLimited() != null && shopItem.getLimited()) {
+                // Acquire lock for limited item
+                int itemStock = shopItem.getStock() != null ? shopItem.getStock() : 0;
+                itemLockKey = String.format("item_stock_lock_%s_%s_%d", itemName, itemCategory, itemStock);
+                itemLockAcquired = redis.opsForValue().setIfAbsent(itemLockKey, "locked", 15, TimeUnit.SECONDS);
+
+                if (itemLockAcquired == null || !itemLockAcquired) {
+                    return ResponseEntity.status(429)
+                            .body("Item is currently being purchased by another user, please try again.");
+                }
+
+                // Check if stock is available
+                if (shopItem.getStock() == null || shopItem.getStock() <= 0) {
+                    return ResponseEntity.badRequest().body("Item is out of stock.");
+                }
+            }
+
             double price = shopItem.getPrice();
             if (user.getCoins() < price) {
                 return ResponseEntity.badRequest().body("Not enough coins to purchase this item.");
@@ -76,16 +102,35 @@ public class ShopService {
                         newPurchasedItem.setQuantity(0);
                         return newPurchasedItem;
                     });
+
             purchasedItem.setQuantity(purchasedItem.getQuantity() + 1);
             purchasedItemRepository.save(purchasedItem);
             user.setCoins(user.getCoins() - (int) price);
             userRepository.save(user);
 
+            if (shopItem.getLimited() != null && shopItem.getLimited()) {
+                shopItem.setStock(shopItem.getStock() - 1);
+                shopItemRepository.save(shopItem);
+
+                ShopItemDTO updatedShopItemDTO = new ShopItemDTO(
+                        shopItem.getId(),
+                        shopItem.getName(),
+                        shopItem.getDescription(),
+                        shopItem.getCategory(),
+                        shopItem.getPrice(),
+                        shopItem.getLimited(),
+                        shopItem.getStock());
+                redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(updatedShopItemDTO), 10,
+                        TimeUnit.MINUTES);
+            }
+
             PurchaseMessage purchaseMessage = new PurchaseMessage(userId, String.valueOf(shopItem.getId()), price);
             rabbit.convertAndSend(RabbitMQConfig.SHOP_PURCHASE_QUEUE, objectMapper.writeValueAsString(purchaseMessage));
+
             return ResponseEntity.ok(String.format(
                     "Successfully purchased %s from %s category for %d coins. You now have %d this item and %d coins.",
                     itemName, itemCategory, (int) price, purchasedItem.getQuantity(), user.getCoins()));
+
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(404).body(String.format("User %s Not Found", userId));
         } catch (ItemNotFoundException e) {
@@ -96,8 +141,11 @@ public class ShopService {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         } finally {
-            redis.delete(lockKey);
+            // Release locks in reverse order
+            if (itemLockKey != null) {
+                redis.delete(itemLockKey);
+            }
+            redis.delete(userLockKey);
         }
     }
-
 }
