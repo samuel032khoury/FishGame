@@ -1,12 +1,15 @@
 package com.samuelji.fishgame.message;
 
-import lombok.AllArgsConstructor;
+import java.io.Serializable;
+
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
-@AllArgsConstructor
-public class PurchaseMessage {
-    private final String userId;
-    private final String shopItemId;
-    private final Double price;
+@RequiredArgsConstructor
+public class PurchaseMessage implements Serializable {
+    private String userId;
+    private String itemName;
+    private String category;
+
 }

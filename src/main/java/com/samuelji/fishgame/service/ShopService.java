@@ -2,16 +2,13 @@ package com.samuelji.fishgame.service;
 
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.samuelji.fishgame.config.RabbitMQConfig;
 import com.samuelji.fishgame.dto.ShopItemDTO;
-import com.samuelji.fishgame.message.PurchaseMessage;
 import com.samuelji.fishgame.model.PurchasedItem;
 import com.samuelji.fishgame.model.ShopItem;
 import com.samuelji.fishgame.model.User;
@@ -26,7 +23,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ShopService {
     private final StringRedisTemplate redis;
-    private final RabbitTemplate rabbit;
+    private final PurchaseProducer purchaseProducer;
     private final ShopItemRepository shopItemRepository;
     private final PurchasedItemRepository purchasedItemRepository;
     private final UserRepository userRepository;
@@ -123,9 +120,7 @@ public class ShopService {
                 redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(updatedShopItemDTO), 10,
                         TimeUnit.MINUTES);
             }
-
-            PurchaseMessage purchaseMessage = new PurchaseMessage(userId, String.valueOf(shopItem.getId()), price);
-            rabbit.convertAndSend(RabbitMQConfig.SHOP_PURCHASE_QUEUE, objectMapper.writeValueAsString(purchaseMessage));
+            purchaseProducer.sendPurchaseMessage(userId, itemName, itemCategory);
 
             return ResponseEntity.ok(String.format(
                     "Successfully purchased %s from %s category for %d coins. You now have %d this item and %d coins.",

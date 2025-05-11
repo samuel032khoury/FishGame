@@ -21,12 +21,13 @@ public class UserService {
         User user = new User();
         user.setUserId(request.getUserId());
         user.setUserName(request.getUserName());
+        user.setEmail(request.getEmail());
         userRepository.save(user);
     }
 
     public UserDTO.BasicInfoResponse getUserBasicInfo(String userId) {
         User user = userRepository.findByUserId(userId).get();
-        return new UserDTO.BasicInfoResponse(user.getUserName(), user.getRodType());
+        return new UserDTO.BasicInfoResponse(user.getUserName(), user.getRodType(), user.getEmail());
     }
 
     public UserDTO.FinanceInfoResponse getUserFinanceInfo(String userId) {

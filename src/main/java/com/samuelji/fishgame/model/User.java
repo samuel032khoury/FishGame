@@ -29,6 +29,7 @@ public class User {
     private String userId;
 
     private String userName;
+    private String email;
 
     private int coins = 0;
     private int diamonds = 0;
@@ -44,4 +45,5 @@ public class User {
     @OneToMany(mappedBy = "user")
     @JsonManagedReference("user-items")
     private Set<PurchasedItem> purchasedItems = new HashSet<>();
+
 }

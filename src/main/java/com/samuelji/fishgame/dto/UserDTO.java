@@ -12,7 +12,7 @@ public class UserDTO {
     public static class Request {
         private String userId;
         private String userName;
-
+        private String email;
     }
 
     @Data
@@ -20,6 +20,7 @@ public class UserDTO {
     public static class BasicInfoResponse {
         private String userName;
         private String rodType;
+        private String email;
     }
 
     @Data
