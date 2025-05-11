@@ -2,6 +2,7 @@ package com.samuelji.fishgame.controller;
 
 import java.util.List;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +26,9 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/admin")
 @AllArgsConstructor
 public class AdminController {
-    private FishSpeciesRepository fishSpeciesRepository;
-    private ShopItemRepository shopItemRepository;
+    private final FishSpeciesRepository fishSpeciesRepository;
+    private final ShopItemRepository shopItemRepository;
+    private final StringRedisTemplate redis;
 
     @GetMapping
     public String adminDashboard() {
@@ -151,6 +153,7 @@ public class AdminController {
             shopItem.setStock(null);
         }
         ShopItem savedShopItem = shopItemRepository.save(shopItem);
+        redis.delete(String.format("shop_item_%s_%s", request.getName(), request.getCategory()));
         return ResponseEntity.ok(mapToShopItem(savedShopItem));
     }
 }
