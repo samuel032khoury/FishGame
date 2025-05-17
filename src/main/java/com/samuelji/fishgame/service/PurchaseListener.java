@@ -22,19 +22,24 @@ public class PurchaseListener {
         try {
             String userEmail = lookupUserEmail(message.getUserId());
             String username = lookUpUserName(message.getUserId());
+            Integer userBalance = lookUpUserBalance(message.getUserId());
             if (userEmail != null) {
                 SimpleMailMessage mail = new SimpleMailMessage();
                 mail.setTo(userEmail);
                 mail.setFrom("x.samuel.j032@gmail.com");
                 mail.setSubject("Purchase Confirmation");
                 mail.setText(String.format(
-                        "Dear %s,\n\nYou have successfully purchased %s in the category %s.\n\nThank you!",
-                        username, message.getItemName(), message.getCategory()));
+                        "Dear %s,\n\nYou have successfully purchased %s in the category %s.\n\n Your current balance is %d.\n\nThank you!",
+                        username, message.getItemName(), message.getCategory(), userBalance));
                 mailSender.send(mail);
             }
         } catch (Exception e) {
             return;
         }
+    }
+
+    private Integer lookUpUserBalance(String userId) {
+        return userRepository.findByUserId(userId).map(item -> item.getCoins()).orElse(0);
     }
 
     private String lookUpUserName(String userId) {
