@@ -22,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class ImageGeneratorService {
+public class ImageGenService {
     private final RestTemplate restTemplate;
     private final ImageRepository imageRepository;
     private final ObjectMapper objectMapper;
     private final OpenAIConfig openAIConfig;
 
-    @Async("taskExecutor")
+    @Async("ImageGenExecutor")
     public void regenerateImages(int count) {
         String url = openAIConfig.getImageGenUrl();
         for (int i = 0; i < count; i++) {
@@ -36,6 +36,7 @@ public class ImageGeneratorService {
             headers.setBearerAuth(openAIConfig.getKey());
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            // TODO: different prompts for different images (of different fish)
             JsonNode body = objectMapper.createObjectNode()
                     .put("prompt", "A beautiful fish in the ocean")
                     .put("n", 1)
