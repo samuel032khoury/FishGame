@@ -13,7 +13,7 @@ import lombok.Data;
 @EnableAsync
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "image.gen")
+@ConfigurationProperties(prefix = "async.thread")
 public class ImageGenConfig {
     private int corePoolSize;
     private int maxPoolSize;

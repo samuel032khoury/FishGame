@@ -11,4 +11,5 @@ import lombok.Data;
 public class OpenAIConfig {
     private String key;
     private String imageGenUrl;
+    private String chatGenUrl;
 }
